@@ -31,11 +31,47 @@ router.post("/", async (req, res) => {
   try {
     const { name, client_id, status } = req.body;
 
+    // Validate project name
+    if (typeof name !== "string" || name.trim() === "") {
+      return res.status(400).json({
+        error: "Project name is required",
+      });
+    }
+
+    // Validate client_id
+    if (!Number.isInteger(client_id) || client_id <= 0) {
+      return res.status(400).json({
+        error: "Valid client_id is required",
+      });
+    }
+
+    // Validate status when provided
+    const projectStatus = status || "planning";
+    const allowedStatuses = ["planning", "in_progress", "completed"];
+
+    if (!allowedStatuses.includes(projectStatus)) {
+      return res.status(400).json({
+        error: "Invalid project status",
+      });
+    }
+
+    // Check whether the client exists
+    const clientResult = await pool.query(
+      `SELECT id FROM clients WHERE id = $1`,
+      [client_id]
+    );
+
+    if (clientResult.rows.length === 0) {
+      return res.status(400).json({
+        error: "Client not found",
+      });
+    }
+
     const result = await pool.query(
       `INSERT INTO projects (name, client_id, status)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [name, client_id, status || "planning"]
+      [name.trim(), client_id, projectStatus]
     );
 
     res.status(201).json(result.rows[0]);
