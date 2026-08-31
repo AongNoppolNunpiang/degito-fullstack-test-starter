@@ -33,19 +33,22 @@ export default function App() {
   }
 
   async function handleStatusChange(projectId, newStatus) {
-    setError("");
+  setError("");
 
-    try {
-      await updateStatus(projectId, newStatus);
-      const project = projects.find((p) => p.id === projectId);
-      if (project) {
-        project.status = newStatus;
-      }
-      setProjects(projects);
-    } catch (err) {
-      setError(err.message);
-    }
+  try {
+    await updateStatus(projectId, newStatus);
+
+    setProjects((previousProjects) =>
+      previousProjects.map((project) =>
+        project.id === projectId
+          ? { ...project, status: newStatus }
+          : project
+      )
+    );
+  } catch (err) {
+    setError(err.message);
   }
+}
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -119,21 +122,17 @@ export default function App() {
                 <td>
                   <span className="status-badge">{p.status}</span>
                   <select
-                    defaultValue=""
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        handleStatusChange(p.id, e.target.value);
-                      }
-                      e.target.value = "";
-                    }}
-                  >
-                    <option value="">Change status…</option>
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+  value={p.status}
+  onChange={(e) => {
+    handleStatusChange(p.id, e.target.value);
+  }}
+>
+  {STATUS_OPTIONS.map((s) => (
+    <option key={s} value={s}>
+      {s}
+    </option>
+  ))}
+</select>
                 </td>
               </tr>
             ))}
