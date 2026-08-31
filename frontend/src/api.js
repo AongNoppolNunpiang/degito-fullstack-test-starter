@@ -14,8 +14,15 @@ async function request(path, options = {}) {
   return data;
 }
 
-export function getProjects() {
-  return request("/api/projects");
+export function getProjects(clientName = "") {
+  const params = new URLSearchParams();
+
+  if (clientName) {
+    params.set("clientName", clientName);
+  }
+
+  const query = params.toString();
+  return request(query ? `/api/projects?${query}` : "/api/projects");
 }
 
 export function getClients() {

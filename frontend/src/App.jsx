@@ -8,18 +8,25 @@ export default function App() {
   const [clients, setClients] = useState([]);
   const [newProject, setNewProject] = useState({ name: "", client_id: "" });
   const [error, setError] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
+  const [activeClientSearch, setActiveClientSearch] = useState("");
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
 
   useEffect(() => {
     fetchProjects();
     fetchClients();
   }, []);
 
-  async function fetchProjects() {
+  async function fetchProjects(clientName = activeClientSearch) {
+    setIsLoadingProjects(true);
+
     try {
-      const data = await getProjects();
+      const data = await getProjects(clientName);
       setProjects(data);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsLoadingProjects(false);
     }
   }
 
@@ -61,10 +68,26 @@ export default function App() {
         client_id: Number(newProject.client_id),
       });
       setNewProject({ name: "", client_id: "" });
-      fetchProjects();
+      fetchProjects(activeClientSearch);
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  function handleSearch(e) {
+    e.preventDefault();
+
+    const clientName = clientSearch.trim();
+    setError("");
+    setActiveClientSearch(clientName);
+    fetchProjects(clientName);
+  }
+
+  function handleClearSearch() {
+    setClientSearch("");
+    setActiveClientSearch("");
+    setError("");
+    fetchProjects("");
   }
 
   return (
@@ -106,6 +129,24 @@ export default function App() {
 
       <section className="project-list">
         <h2>Projects</h2>
+        <form onSubmit={handleSearch}>
+          <input
+            type="text"
+            placeholder="Search by client name"
+            value={clientSearch}
+            onChange={(e) => setClientSearch(e.target.value)}
+          />
+          <button type="submit">Search</button>
+          <button type="button" onClick={handleClearSearch}>
+            Clear
+          </button>
+        </form>
+
+        {isLoadingProjects ? (
+          <p>Loading projects...</p>
+        ) : projects.length === 0 ? (
+          <p>No projects found.</p>
+        ) : (
         <table>
           <thead>
             <tr>
@@ -138,6 +179,7 @@ export default function App() {
             ))}
           </tbody>
         </table>
+        )}
       </section>
     </div>
   );
