@@ -7,39 +7,61 @@ export default function App() {
   const [projects, setProjects] = useState([]);
   const [clients, setClients] = useState([]);
   const [newProject, setNewProject] = useState({ name: "", client_id: "" });
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchProjects();
     fetchClients();
   }, []);
 
-  function fetchProjects() {
-    getProjects().then(setProjects);
+  async function fetchProjects() {
+    try {
+      const data = await getProjects();
+      setProjects(data);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
-  function fetchClients() {
-    getClients().then(setClients);
+  async function fetchClients() {
+    try {
+      const data = await getClients();
+      setClients(data);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
-  function handleStatusChange(projectId, newStatus) {
-    updateStatus(projectId, newStatus).then(() => {
+  async function handleStatusChange(projectId, newStatus) {
+    setError("");
+
+    try {
+      await updateStatus(projectId, newStatus);
       const project = projects.find((p) => p.id === projectId);
       if (project) {
         project.status = newStatus;
       }
       setProjects(projects);
-    });
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
-  function handleCreate(e) {
+  async function handleCreate(e) {
     e.preventDefault();
-    createProject({
-      name: newProject.name,
-      client_id: Number(newProject.client_id),
-    }).then(() => {
+
+    setError("");
+
+    try {
+      await createProject({
+        name: newProject.name,
+        client_id: Number(newProject.client_id),
+      });
       setNewProject({ name: "", client_id: "" });
       fetchProjects();
-    });
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   return (
@@ -48,6 +70,8 @@ export default function App() {
         <h1>Client Project Tracker</h1>
         <p>Internal tool for tracking active client projects.</p>
       </header>
+
+      {error && <p role="alert">{error}</p>}
 
       <section className="new-project">
         <h2>Add Project</h2>
